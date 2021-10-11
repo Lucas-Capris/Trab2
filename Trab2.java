@@ -36,7 +36,7 @@ public class Trab2 {
     //Criando as threads
     Produtor[] prod = new Produtor[P];
     for (int i = 0; i<P; i++){
-      prod[i] = new Produtor(br, N, blocos, monitor);
+      prod[i] = new Produtor(br, N, monitor);
       prod[i].start();
     }
 
@@ -104,16 +104,14 @@ class Monitor { //Monitor para fazer a exclusao mutua entre as threads
 }
 
 class Produtor extends Thread {
-  protected BufferedReader br;
-  protected int N;
-  protected int blocos;
-  protected Monitor monitor;
+  private BufferedReader br;
+  private int N;
+  private Monitor monitor;
   
   //Construtor da classe
-  public Produtor(BufferedReader br, int N, int blocos, Monitor monitor){
+  public Produtor(BufferedReader br, int N, Monitor monitor){
     this.br = br;
     this.N = N;
-    this.blocos = blocos;
     this.monitor = monitor;
   }
 
@@ -143,13 +141,13 @@ class Produtor extends Thread {
 }
 
 class ConsumidorEscritor extends Thread {
-  protected int id;
-  protected int N;
-  protected int blocos;
-  protected Monitor monitor;
-  protected PrintWriter saida; //Arquivo saida
+  private int id;
+  private int N;
+  private int blocos;
+  private Monitor monitor;
+  private PrintWriter saida; //Arquivo saida
   
-  protected int[] ordena; //Bloco a ser ordenado
+  private int[] ordena; //Bloco a ser ordenado
 
   //Construtor da classe
   public ConsumidorEscritor(int id, int N, int blocos, Monitor monitor, PrintWriter saida){
