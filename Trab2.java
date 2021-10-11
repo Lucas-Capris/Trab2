@@ -6,16 +6,16 @@ public class Trab2 {
   static int C; //Threads ConsumidorEscritoras
   static final int P = 1; //Threads produtoras
 
-  static int out = 0; //inição do último elemento retirado do buffer
-  static int count = 0; //Número de elementos no buffer
-  static int escrito = 0; //Última linha do arquivo que foi sobrescrita
+  static int out = 0; //Posicao do elemento a ser retirado do buffer
+  static int count = 0; //Numero de elementos no buffer
+  static int escrito = 0; //Ultima linha do arquivo que foi sobrescrita
   static int[][] buffer = new int[10][];
 
   public static void main(String[] args) throws Exception{
-    File file = new File("Entrada.txt");
+    File file = new File("Entrada.txt"); //Arquivo a ser lido
     BufferedReader br = new BufferedReader(new FileReader(file));
     String str = br.readLine();
-    int Elementos = Integer.parseInt(str); //Quantidade de elementos (primeira in do arquivo de entrada)
+    int Elementos = Integer.parseInt(str); //Quantidade de elementos (primeira linha do arquivo de entrada)
 
     PrintWriter saida = new PrintWriter(new File("Saida.txt"));
 
@@ -33,6 +33,7 @@ public class Trab2 {
 
     int blocos = Elementos/N; //Numero de blocos
 
+    //Criando as threads
     Produtor[] prod = new Produtor[P];
     for (int i = 0; i<P; i++){
       prod[i] = new Produtor(br, N, blocos, monitor);
@@ -47,7 +48,7 @@ public class Trab2 {
   }
 }
 
-class Monitor {
+class Monitor { //Monitor para fazer a exclusao mutua entre as threads
   public synchronized void Insere(int in, int[] linha){
     //Sem necessidade de ser while visto que só há uma thread produtora, não podendo haver incremento no valor de count antes da liberação do wait()
     if (Trab2.count == 10){
@@ -62,7 +63,7 @@ class Monitor {
     Trab2.buffer[in] = linha;
     Trab2.count++;
     
-    notify();
+    notify(); //Liberando a thread para consumir caso haja alguma em wait()
   }
 
   public synchronized int[] Retira(int N){
@@ -86,11 +87,12 @@ class Monitor {
     Trab2.out = (Trab2.out+1)%10;
 
     Trab2.count--;
-    notify();
+    notify(); //Liberando a thread para escrever caso haja alguma em wait()
 
-    return ordena;
+    return ordena; //Bloco a ser ordenado pelas threads
   }
 
+  //Faz escrita no arquivo de saída. Uso do "synchronized" garante exclusão mútua
   public synchronized void Sobresreve(int[] ordena, PrintWriter saida){
     String str = Arrays.toString(ordena);
     str = str.substring(1, str.length() - 1);
@@ -106,7 +108,8 @@ class Produtor extends Thread {
   protected int N;
   protected int blocos;
   protected Monitor monitor;
-
+  
+  //Construtor da classe
   public Produtor(BufferedReader br, int N, int blocos, Monitor monitor){
     this.br = br;
     this.N = N;
@@ -129,10 +132,9 @@ class Produtor extends Thread {
           aux[i] = Integer.parseInt(parts[i]);
         }
         
-        monitor.Insere(in, aux);
+        monitor.Insere(in, aux); //Metodo que insere elemento no buffer
         in = (in+1)%10;
       }
-      //System.out.println(Arrays.deepToString(Trab2.buffer));
     } catch (IOException e) {
       System.out.println("ERRO -- br.readline()");
       e.printStackTrace();
@@ -145,10 +147,11 @@ class ConsumidorEscritor extends Thread {
   protected int N;
   protected int blocos;
   protected Monitor monitor;
-  protected PrintWriter saida;
+  protected PrintWriter saida; //Arquivo saida
   
-  protected int[] ordena;
+  protected int[] ordena; //Bloco a ser ordenado
 
+  //Construtor da classe
   public ConsumidorEscritor(int id, int N, int blocos, Monitor monitor, PrintWriter saida){
     this.id = id;
     this.N = N;
@@ -158,12 +161,13 @@ class ConsumidorEscritor extends Thread {
   }
 
   public void run(){
+    //Threads executaram de forma alternada
     for (int i=id; i<blocos; i+=Trab2.C){
-      ordena = monitor.Retira(N);
+      ordena = monitor.Retira(N); //Metodo que retorna o bloco de tamanho N retirado do buffer
 
-      Arrays.sort(ordena);
+      Arrays.sort(ordena); //Sort() ordenando o bloco em ordem crescente
 
-      monitor.Sobresreve(ordena, saida);
+      monitor.Sobresreve(ordena, saida); //Metodo que faz a escrita no arquivo de saida
     }
   }
 }
